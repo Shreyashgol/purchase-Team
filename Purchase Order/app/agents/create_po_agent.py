@@ -7,6 +7,14 @@ from app.schema.response import PurchaseOrderActionResponse
 def execute(intent, repository) -> PurchaseOrderActionResponse:
     if not intent.cardCode:
         raise HTTPException(status_code=400, detail="Vendor code (CardCode) is required to create a purchase order")
+    if not intent.items:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "At least one line item is required to create a purchase order. "
+                "Example: create a purchase order for vendor V100 with 10 units of ITEM001 at 50 each with tax code T1"
+            ),
+        )
 
     po_payload = {
         "CardCode": intent.cardCode,

@@ -18,7 +18,7 @@ AP Invoice/
 ├── app/
 │   ├── main.py
 │   ├── config.py
-│   ├── agents.py/
+│   ├── agents/
 │   │   ├── create_agent.py
 │   │   └── fetch_agent.py
 │   ├── api/

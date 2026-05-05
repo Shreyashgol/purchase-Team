@@ -20,7 +20,7 @@ def _parse_env_line(line: str) -> tuple[str, str] | None:
     return key, value
 
 
-def load_env_file(path: Path):
+def load_env_file(path: Path, override: bool = False):
     if not path.exists():
         return
 
@@ -29,7 +29,10 @@ def load_env_file(path: Path):
         if parsed is None:
             continue
         key, value = parsed
-        os.environ.setdefault(key, value)
+        if override:
+            os.environ[key] = value
+        else:
+            os.environ.setdefault(key, value)
 
 
 def load_agent_env(current_file: str):
@@ -38,4 +41,4 @@ def load_agent_env(current_file: str):
     agent_root = current_path.parents[1]
 
     load_env_file(repo_root / ".env")
-    load_env_file(agent_root / ".env")
+    load_env_file(agent_root / ".env", override=True)

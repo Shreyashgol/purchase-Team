@@ -30,7 +30,7 @@ def verify_jwt_token(credentials: HTTPAuthorizationCredentials = Depends(securit
 
 @lru_cache(maxsize=None)
 def load_agent_module(agent_name: str):
-    agents_dir = Path(__file__).resolve().parents[1] / "agents.py"
+    agents_dir = Path(__file__).resolve().parents[1] / "agents"
     agent_path = agents_dir / f"{agent_name}.py"
 
     if not agent_path.exists():

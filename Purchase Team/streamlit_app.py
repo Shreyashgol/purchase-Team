@@ -4,6 +4,8 @@ import json
 import importlib.util
 from pathlib import Path
 
+from app.config import AP_INVOICE_API_URL, PURCHASE_ORDER_API_URL, PURCHASE_RETURN_API_URL
+
 # --- Configuration ---
 st.set_page_config(
     page_title="SAP Purchase Team Orchestrator",
@@ -17,9 +19,9 @@ st.markdown("This interface acts as the **Supervisor Agent**. It routes your nat
 # --- Service URLs ---
 with st.sidebar:
     st.header("⚙️ Microservice Endpoints")
-    po_url = st.text_input("Purchase Order API", value="http://127.0.0.1:8002/purchase-orders/parse-and-execute")
-    ap_url = st.text_input("AP Invoice API", value="http://127.0.0.1:8003/ap-invoices/parse-and-execute")
-    pr_url = st.text_input("Purchase Return API", value="http://127.0.0.1:8004/purchase-returns/parse-and-execute")
+    po_url = st.text_input("Purchase Order API", value=PURCHASE_ORDER_API_URL)
+    ap_url = st.text_input("AP Invoice API", value=AP_INVOICE_API_URL)
+    pr_url = st.text_input("Purchase Return API", value=PURCHASE_RETURN_API_URL)
     
     st.header("🔐 Authentication")
     token = st.text_input("JWT Token", type="password", help="Enter a valid JWT token for the backend services")
@@ -33,7 +35,7 @@ if "history" not in st.session_state:
 def load_supervisor():
     # Load supervisor directly to avoid namespace conflicts with 'app' modules
     current_dir = Path(__file__).parent
-    supervisor_path = current_dir / "app" / "agents.py" / "supervisor_agent.py"
+    supervisor_path = current_dir / "app" / "agents" / "supervisor_agent.py"
     
     if not supervisor_path.exists():
         st.error(f"Supervisor agent not found at {supervisor_path}")
@@ -74,7 +76,11 @@ if prompt:
             try:
                 # The execute method returns a Pydantic model PurchaseTeamRoutingResponse
                 routing_response = supervisor_agent.execute(prompt)
-                decision_data = routing_response.data["fetchAgent"]
+                response_data = routing_response.model_dump()["data"]
+                decision_data = response_data.get("fetchAgent")
+                if not decision_data:
+                    st.json(response_data)
+                    raise RuntimeError("Supervisor did not return a fetchAgent routing decision.")
                 
                 st.success(f"Routed to: **{decision_data['subagent']}**")
                 st.json(decision_data)

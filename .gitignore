@@ -1,2 +1,15 @@
-myvenv
+myvenv/
+venv/
+.venv/
+
 .env
+**/.env
+!.env.example
+!**/.env.example
+
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+
+.DS_Store

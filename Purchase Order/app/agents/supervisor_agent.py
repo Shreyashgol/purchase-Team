@@ -26,10 +26,19 @@ def execute(intent, repository):
             detail=f"Supervisor blocked {action}: DocEntry is required before calling {agent_name}.",
         )
 
-    if action == "create" and (not intent.cardCode or not intent.items):
+    if action == "create" and not intent.cardCode:
         raise HTTPException(
             status_code=400,
-            detail="Supervisor blocked create: vendor CardCode and at least one item are required.",
+            detail="Supervisor blocked create: vendor CardCode is required. Example: create a purchase order for vendor V100 with 10 units of ITEM001 at 50 each.",
+        )
+
+    if action == "create" and not intent.items:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Supervisor blocked create: at least one item with quantity is required for vendor {intent.cardCode}. "
+                "Example: create a purchase order for vendor V100 with 10 units of APPLE at 50 each with tax code T1."
+            ),
         )
 
     agent_module = load_agent_module(agent_name)

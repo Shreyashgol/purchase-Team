@@ -4,6 +4,7 @@ from typing import Any, Dict, TypedDict
 import requests
 from langgraph.graph import END, StateGraph
 
+from app.agents.fetch_agent import decide
 from app.config import GROQ_API_KEY, GROQ_MODEL
 
 CLASSIFIER_PROMPT_TEMPLATE = """
@@ -48,6 +49,15 @@ class SupervisorState(TypedDict, total=False):
 
 
 def classifier_node(state: SupervisorState) -> SupervisorState:
+    if not GROQ_API_KEY:
+        fallback = decide(state["prompt"])
+        return {
+            "document_type": fallback["documentType"],
+            "action": fallback["action"],
+            "reason": "Routed with local keyword fallback because GROQ_API_KEY is not configured.",
+            "error": "",
+        }
+
     formatted_prompt = CLASSIFIER_PROMPT_TEMPLATE.format(user_prompt=state["prompt"])
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
@@ -90,7 +100,13 @@ def classifier_node(state: SupervisorState) -> SupervisorState:
 
         return {"document_type": doc_type, "action": action, "reason": reason, "error": ""}
     except Exception as exc:
-        return {"error": str(exc)}
+        fallback = decide(state["prompt"])
+        return {
+            "document_type": fallback["documentType"],
+            "action": fallback["action"],
+            "reason": f"Routed with local keyword fallback after classifier failure: {exc}",
+            "error": "",
+        }
 
 
 def router_node(state: SupervisorState) -> SupervisorState:

@@ -1,6 +1,7 @@
 import importlib.util
 from pathlib import Path
 
+from app.agents.fetch_agent import decide
 from app.schema.response import PurchaseTeamRoutingResponse
 
 
@@ -21,13 +22,23 @@ def execute(prompt: str) -> PurchaseTeamRoutingResponse:
     result_state = app.invoke({"prompt": prompt})
     
     if result_state.get("error"):
+        decision = decide(prompt)
         return PurchaseTeamRoutingResponse(
-            status="error",
-            message=f"Supervisor graph execution failed: {result_state['error']}",
-            data={"error": result_state["error"]}
+            status="routed",
+            message=f"Supervisor used local fallback after graph error: {result_state['error']}",
+            data={
+                "supervisor": {
+                    "decision": f"Fallback routing to {decision['subagent']}",
+                    "agent": "local_keyword_router",
+                    "documentType": decision["documentType"],
+                    "action": decision["action"],
+                    "reason": result_state["error"],
+                },
+                "fetchAgent": decision,
+            },
         )
-        
-    decision = result_state["routing_decision"]
+
+    decision = result_state.get("routing_decision") or decide(prompt)
     
     return PurchaseTeamRoutingResponse(
         status="routed",

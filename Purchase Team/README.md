@@ -9,3 +9,11 @@
    - `purchase_return_agent`
 4. The selected document agent handles its own `create`, `fetch`, `update`, `close`, or `cancel` subagent.
 
+## Run
+
+Start the three document APIs first, then run:
+
+```bash
+cd "/Users/shreyashgolhani/Desktop/sap /Purchase Team"
+../myvenv/bin/python -m streamlit run streamlit_app.py --server.address 127.0.0.1 --server.port 8501
+```

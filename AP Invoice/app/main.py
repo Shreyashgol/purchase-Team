@@ -3,15 +3,16 @@ import logging
 from fastapi import FastAPI
 
 from app.api import ap_invoices, auth
+from app.config import API_PREFIX, APP_NAME
 from app.db.base import init_db_pool
 
 
 logging.basicConfig(level=logging.INFO)
 
-app = FastAPI(title="SAP B1 AP Invoice Agent")
+app = FastAPI(title=APP_NAME)
 
 app.include_router(auth.router, tags=["Auth"])
-app.include_router(ap_invoices.router, prefix="/ap-invoices", tags=["AP Invoices"])
+app.include_router(ap_invoices.router, prefix=API_PREFIX, tags=["AP Invoices"])
 
 
 @app.on_event("startup")
@@ -25,4 +26,4 @@ async def startup_event():
 
 @app.get("/")
 def root():
-    return {"message": "SAP B1 AP Invoice Agent is running"}
+    return {"message": f"{APP_NAME} is running"}
