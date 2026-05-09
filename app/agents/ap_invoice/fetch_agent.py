@@ -5,6 +5,7 @@ from fastapi import HTTPException
 
 from app.operations.sql_executor import execute_read_only_sql
 from app.operations.ap_invoice_text_to_sql import build_ap_invoice_fetch_sql
+from app.operations.purchase_rag import build_purchase_rag_fetch_sql, should_use_purchase_rag
 from app.schema.response import APInvoiceActionResponse
 
 
@@ -23,13 +24,17 @@ def execute(intent, repository) -> APInvoiceActionResponse:
 
     fetch_query = intent.fetchQuery or ""
     fetch_decision = _load_fetch_checker().decide(fetch_query)
+    use_rag = should_use_purchase_rag(fetch_query)
 
     try:
-        query_spec = build_ap_invoice_fetch_sql(
-            fetch_query=fetch_query,
-            intent_card_code=intent.cardCode,
-            intent_doc_entry=intent.docEntry,
-        )
+        if use_rag:
+            query_spec = build_purchase_rag_fetch_sql(fetch_query=fetch_query)
+        else:
+            query_spec = build_ap_invoice_fetch_sql(
+                fetch_query=fetch_query,
+                intent_card_code=intent.cardCode,
+                intent_doc_entry=intent.docEntry,
+            )
         rows = execute_read_only_sql(query_spec["sql"], query_spec["params"])
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -61,6 +66,7 @@ def execute(intent, repository) -> APInvoiceActionResponse:
             "filters": filters,
             "rowCount": count,
             "sql": query_spec["sql"],
+            "strategy": "rag" if use_rag else "deterministic",
             "rows": rows,
         },
     )

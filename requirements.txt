@@ -7,6 +7,7 @@ blinker==1.9.0
 cachetools==7.0.5
 certifi==2026.2.25
 charset-normalizer==3.4.7
+chromadb
 click==8.3.2
 colorama==0.4.6
 ecdsa==0.19.2
@@ -36,7 +37,7 @@ packaging==24.2
 pandas==3.0.2
 passlib==1.7.4
 pillow==12.2.0
-protobuf==7.34.1
+protobuf==6.33.6
 pyarrow==23.0.1
 pyasn1==0.6.3
 pydantic>=2.10.0
@@ -52,6 +53,7 @@ requests==2.32.3
 requests-toolbelt==1.0.0
 rpds-py==0.30.0
 rsa==4.9.1
+sentence_transformers
 six==1.17.0
 smmap==5.0.3
 starlette==0.38.6

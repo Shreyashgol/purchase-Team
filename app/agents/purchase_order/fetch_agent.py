@@ -8,6 +8,7 @@ from fastapi import HTTPException
 
 from app.operations.sql_executor import execute_read_only_sql
 from app.operations.purchase_order_text_to_sql import build_purchase_order_fetch_sql
+from app.operations.purchase_rag import build_purchase_rag_fetch_sql, should_use_purchase_rag
 from app.schema.response import PurchaseOrderActionResponse
 
 
@@ -220,13 +221,17 @@ def execute(intent, repository):
 
     fetch_query = intent.fetchQuery or ""
     fetch_decision = _load_fetch_checker().decide(fetch_query)
+    use_rag = should_use_purchase_rag(fetch_query)
 
     try:
-        query_spec = build_purchase_order_fetch_sql(
-            fetch_query=fetch_query,
-            intent_card_code=intent.cardCode,
-            intent_doc_entry=intent.docEntry,
-        )
+        if use_rag:
+            query_spec = build_purchase_rag_fetch_sql(fetch_query=fetch_query)
+        else:
+            query_spec = build_purchase_order_fetch_sql(
+                fetch_query=fetch_query,
+                intent_card_code=intent.cardCode,
+                intent_doc_entry=intent.docEntry,
+            )
         rows = execute_read_only_sql(query_spec["sql"], query_spec["params"])
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -238,11 +243,13 @@ def execute(intent, repository):
 
     filters = query_spec["filters"]
     result_type = filters.get("resultType", "purchaseOrders")
-    normalized_rows = _normalize_rows(rows, result_type)
+    normalized_rows = rows if result_type == "ragQuery" else _normalize_rows(rows, result_type)
     count = len(normalized_rows)
     doc_entry = _get(rows[0], "DocEntry", "doc_entry")
 
-    if count == 1:
+    if result_type == "ragQuery":
+        message = "✅ I ran the purchase RAG fetch and found 1 result." if count == 1 else f"✅ I ran the purchase RAG fetch and found {count} results."
+    elif count == 1:
         message = "✅ Here is the purchase order line you requested." if result_type == "purchaseOrderLines" else "✅ Here is the Purchase Order you requested."
     else:
         noun = "purchase order lines" if result_type == "purchaseOrderLines" else "purchase orders"
@@ -260,6 +267,8 @@ def execute(intent, repository):
             },
             "filters": filters,
             "rowCount": count,
+            "sql": query_spec["sql"],
+            "strategy": "rag" if use_rag else "deterministic",
             "results": normalized_rows,
         },
     )

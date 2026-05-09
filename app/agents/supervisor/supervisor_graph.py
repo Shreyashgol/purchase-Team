@@ -82,7 +82,7 @@ def classifier_node(state: SupervisorState) -> SupervisorState:
         return {
             "document_type": fallback["documentType"],
             "action": fallback["action"],
-            "reason": f"Routed with local keyword fallback after Ollama classifier failure: {exc}",
+            "reason": f"Routed with local keyword fallback after LLM classifier failure: {exc}",
             "error": "",
         }
 

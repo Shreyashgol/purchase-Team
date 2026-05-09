@@ -1,15 +1,29 @@
+# ─── Virtual environments ──────────────────────────────────────────────────────
 myvenv/
 venv/
 .venv/
 
+# ─── Environment secrets ───────────────────────────────────────────────────────
 .env
 **/.env
 !.env.example
 !**/.env.example
 
+# ─── Python bytecode ───────────────────────────────────────────────────────────
 __pycache__/
 **/__pycache__/
 *.py[cod]
 *$py.class
 
+# ─── Build / packaging artifacts ──────────────────────────────────────────────
+build/
+dist/
+*.egg-info/
+*.egg
+
+# ─── macOS metadata ────────────────────────────────────────────────────────────
 .DS_Store
+**/.DS_Store
+
+# ─── ChromaDB vector store (generated at runtime) ─────────────────────────────
+.rag_chroma/

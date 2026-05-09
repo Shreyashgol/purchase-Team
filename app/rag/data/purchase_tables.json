@@ -1,0 +1,161 @@
+{
+  "opor": {
+    "description": "Purchase order header table representing vendor purchase commitments before receiving/invoicing.",
+    "business_meaning": "purchase pipeline, vendor commitments, ordered value, open purchase orders, overdue purchase orders",
+    "embedding_text": "purchase order po vendor supplier ordered value purchase pipeline open purchase orders pending purchase orders overdue delivery expected delivery order count order value",
+    "business_terms": ["purchase order", "po", "order", "vendor", "supplier", "pending order", "overdue order"],
+    "columns": {
+      "docentry": "internal unique id for the purchase order",
+      "docnum": "purchase order number shown to users",
+      "docdate": "purchase order posting date",
+      "docduedate": "delivery due date",
+      "docstatus": "purchase order status, O for open and C for closed",
+      "canceled": "Y when purchase order is cancelled",
+      "cardcode": "vendor code",
+      "cardname": "vendor name",
+      "doccur": "document currency",
+      "doctotal": "total purchase order value",
+      "paidtodate": "amount already paid or applied",
+      "vatsum": "tax amount",
+      "comments": "free text remarks"
+    },
+    "joins": [
+      { "table": "por1", "on": "opor.docentry = por1.docentry" }
+    ]
+  },
+  "por1": {
+    "description": "Purchase order line table representing item-level ordered quantities and prices.",
+    "business_meaning": "line items, item purchase quantity, pending quantity, delivery status, item-level order value",
+    "embedding_text": "purchase order lines po items ordered quantity pending quantity open quantity received quantity item details delivery line total item spend warehouse tax price",
+    "business_terms": ["po lines", "items", "ordered quantity", "pending quantity", "open quantity", "received quantity"],
+    "columns": {
+      "docentry": "links the line to purchase order header",
+      "linenum": "line number",
+      "itemcode": "item code",
+      "dscription": "item description",
+      "quantity": "ordered quantity",
+      "openqty": "pending or open quantity",
+      "delivrdqty": "delivered or received quantity",
+      "shipdate": "expected delivery date",
+      "price": "unit price",
+      "linetotal": "line value before document totals",
+      "currency": "line currency",
+      "vatprcnt": "tax percent",
+      "vatsum": "tax amount",
+      "taxcode": "tax code",
+      "basecard": "vendor code on line",
+      "whscode": "warehouse code",
+      "linestatus": "line status, O for open and C for closed"
+    },
+    "joins": [
+      { "table": "opor", "on": "por1.docentry = opor.docentry" }
+    ]
+  },
+  "opch": {
+    "description": "AP purchase invoice header table representing finalized vendor bills.",
+    "business_meaning": "actual vendor invoice liability, purchase invoice value, payable amount, balance due, paid invoice analysis",
+    "embedding_text": "ap invoice purchase invoice vendor bill supplier bill payable liability invoice amount paid balance due tax invoice count invoice total",
+    "business_terms": ["ap invoice", "purchase invoice", "vendor invoice", "bill", "payable", "balance due"],
+    "columns": {
+      "docentry": "internal unique id for the AP invoice",
+      "docnum": "AP invoice number shown to users",
+      "numatcard": "vendor reference number",
+      "cardcode": "vendor code",
+      "cardname": "vendor name",
+      "docdate": "invoice posting date",
+      "docduedate": "invoice due date",
+      "taxdate": "tax date",
+      "doccur": "document currency",
+      "doctotal": "total invoice amount",
+      "vatsum": "tax amount",
+      "discsum": "discount amount",
+      "paidtodate": "amount paid to date",
+      "balancedue": "remaining payable balance",
+      "docstatus": "invoice status, O for open and C for closed",
+      "canceled": "Y when invoice is cancelled",
+      "comments": "free text remarks"
+    },
+    "joins": [
+      { "table": "pch1", "on": "opch.docentry = pch1.docentry" }
+    ]
+  },
+  "pch1": {
+    "description": "AP purchase invoice line table representing invoiced item quantities, prices, and tax.",
+    "business_meaning": "invoice line items, item-level vendor billing, invoiced quantity, invoice item spend",
+    "embedding_text": "ap invoice lines purchase invoice items billed quantity invoice item value item spend price tax warehouse line total",
+    "business_terms": ["invoice lines", "billed items", "invoiced quantity", "item invoice value"],
+    "columns": {
+      "docentry": "links the line to AP invoice header",
+      "linenum": "line number",
+      "itemcode": "item code",
+      "dscription": "item description",
+      "quantity": "invoiced quantity",
+      "openqty": "open quantity",
+      "openinvqty": "open invoice quantity",
+      "price": "unit price",
+      "linetotal": "line value",
+      "currency": "line currency",
+      "vatprcnt": "tax percent",
+      "vatsum": "tax amount",
+      "taxcode": "tax code",
+      "whscode": "warehouse code",
+      "linestatus": "line status, O for open and C for closed",
+      "baseentry": "base purchase document entry",
+      "baseline": "base purchase document line"
+    },
+    "joins": [
+      { "table": "opch", "on": "pch1.docentry = opch.docentry" }
+    ]
+  },
+  "orpd": {
+    "description": "Purchase return header table representing vendor returns and returned value.",
+    "business_meaning": "purchase return, goods returned to vendor, return value, return count, vendor return analysis",
+    "embedding_text": "purchase return vendor return goods return returned value return amount supplier return return count return status cancelled return",
+    "business_terms": ["purchase return", "vendor return", "goods return", "return value"],
+    "columns": {
+      "docentry": "internal unique id for the purchase return",
+      "docnum": "purchase return number shown to users",
+      "docdate": "return posting date",
+      "docduedate": "return due date",
+      "docstatus": "return status, O for open and C for closed",
+      "canceled": "Y when return is cancelled",
+      "cardcode": "vendor code",
+      "cardname": "vendor name",
+      "doccur": "document currency",
+      "doctotal": "total return value",
+      "vatsum": "tax amount",
+      "comments": "free text remarks"
+    },
+    "joins": [
+      { "table": "rpd1", "on": "orpd.docentry = rpd1.docentry" }
+    ]
+  },
+  "rpd1": {
+    "description": "Purchase return line table representing item-level returned quantities and values.",
+    "business_meaning": "returned items, item return quantity, return line value, vendor return details",
+    "embedding_text": "purchase return lines returned items returned quantity return item value item details tax warehouse base purchase document",
+    "business_terms": ["return lines", "returned items", "returned quantity", "return item value"],
+    "columns": {
+      "docentry": "links the line to purchase return header",
+      "linenum": "line number",
+      "itemcode": "item code",
+      "dscription": "item description",
+      "quantity": "returned quantity",
+      "openqty": "open return quantity",
+      "price": "unit price",
+      "linetotal": "line value",
+      "currency": "line currency",
+      "vatprcnt": "tax percent",
+      "vatsum": "tax amount",
+      "taxcode": "tax code",
+      "whscode": "warehouse code",
+      "linestatus": "line status, O for open and C for closed",
+      "basetype": "base document type",
+      "baseentry": "base document entry",
+      "baseline": "base document line"
+    },
+    "joins": [
+      { "table": "orpd", "on": "rpd1.docentry = orpd.docentry" }
+    ]
+  }
+}

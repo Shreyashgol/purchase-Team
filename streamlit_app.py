@@ -51,12 +51,7 @@ div[data-testid="stSidebar"] { border-right: 1px solid #d7dee8; }
 )
 
 
-def call_backend(
-    api_url: str,
-    endpoint: str,
-    prompt: str,
-    token: str | None,
-) -> tuple[int | None, dict[str, Any]]:
+def call_backend(api_url: str,endpoint: str,prompt: str,token: str | None) -> tuple[int | None, dict[str, Any]]:
     headers = {"Content-Type": "application/json"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
@@ -141,7 +136,7 @@ if prompt:
     st.session_state.history.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
-
+    
     with st.chat_message("assistant"):
         if not st.session_state.token:
             message = "Please login from the sidebar before I execute the request."
@@ -156,7 +151,7 @@ if prompt:
                 routing_decision = response_data.get("fetchAgent")
                 if not routing_decision:
                     raise RuntimeError("Supervisor did not return a routing decision.")
-
+                 
                 target_endpoint = ROUTE_ENDPOINTS.get(routing_decision["documentType"])
                 if not target_endpoint:
                     raise RuntimeError(f"No backend endpoint mapped for {routing_decision['documentType']}.")

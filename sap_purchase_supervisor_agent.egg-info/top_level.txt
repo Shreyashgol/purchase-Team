@@ -1,3 +1,0 @@
-app
-shared
-streamlit_app

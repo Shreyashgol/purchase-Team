@@ -25,11 +25,20 @@ JWT_SECRET = os.getenv("JWT_SECRET", "change-me")
 JWT_ALGORITHM = os.getenv("JWT_ALGORITHM", "HS256")
 JWT_EXPIRATION_MINUTES = int(os.getenv("JWT_EXPIRATION_MINUTES", "120"))
 
-OLLAMA_BASE_URL = os.getenv("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
-OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "gemma4:e2b")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_BASE_URL = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
+GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 
 SQL_QUERY_TIMEOUT = int(os.getenv("SQL_QUERY_TIMEOUT", "30"))
 DATABASE_CONNECTION_STRING = resolve_database_connection_string()
+
+PURCHASE_RAG_EMBEDDING_MODEL = os.getenv("PURCHASE_RAG_EMBEDDING_MODEL", "BAAI/bge-base-en-v1.5")
+_purchase_rag_persist_dir = Path(os.getenv("PURCHASE_RAG_PERSIST_DIR", ".rag_chroma/purchase"))
+PURCHASE_RAG_PERSIST_DIR = (
+    _purchase_rag_persist_dir
+    if _purchase_rag_persist_dir.is_absolute()
+    else REPO_ROOT / _purchase_rag_persist_dir
+)
 
 PURCHASE_ORDER_API_URL = os.getenv(
     "PURCHASE_ORDER_API_URL",

@@ -77,7 +77,7 @@ def parse_ap_invoice_intent(user_prompt: str) -> APInvoiceIntent:
             timeout=120,
         )
     except requests.exceptions.RequestException as exc:
-        raise Exception(f"Ollama request failed: {str(exc)}") from exc
+        raise Exception(f"LLM request failed: {str(exc)}") from exc
 
     parsed = _extract_json(raw)
     if isinstance(parsed.get("items"), list) and len(parsed["items"]) == 0:
