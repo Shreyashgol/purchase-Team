@@ -4,22 +4,15 @@ from typing import Any
 import requests
 import streamlit as st
 
-from app.agents.supervisor.supervisor_agent import execute as route_prompt
+from app.agents.big_supervisor.big_supervisor_agent import route as big_supervisor_route
 from app.chat_response import generate_chat_response
 
 
 DEFAULT_API_URL = "http://127.0.0.1:8000"
 
-ROUTE_ENDPOINTS = {
-    "purchase_order": "/purchase-orders/parse-and-execute",
-    "ap_invoice": "/ap-invoices/parse-and-execute",
-    "purchase_return": "/purchase-returns/parse-and-execute",
-}
-
-
 st.set_page_config(
-    page_title="SAP Purchase Supervisor",
-    page_icon="SAP",
+    page_title="SAP ERP Supervisor",
+    page_icon="🏢",
     layout="centered",
     initial_sidebar_state="expanded",
 )
@@ -28,22 +21,22 @@ st.markdown(
     """
 <style>
 #MainMenu, footer, header { visibility: hidden; }
-.block-container { padding-top: 1.5rem; max-width: 920px; }
+.block-container { padding-top: 1.5rem; max-width: 960px; }
 div[data-testid="stSidebar"] { border-right: 1px solid #d7dee8; }
 .status-pill {
-    display:inline-block;
-    padding:4px 10px;
-    border:1px solid #b7c4d6;
-    border-radius:999px;
-    font-size:12px;
-    color:#334155;
-    background:#f8fafc;
+    display:inline-block; padding:4px 10px;
+    border:1px solid #b7c4d6; border-radius:999px;
+    font-size:12px; color:#334155; background:#f8fafc;
 }
-.technical-box {
-    border:1px solid #d7dee8;
-    border-radius:8px;
-    padding:12px;
-    background:#ffffff;
+.team-badge-purchase {
+    display:inline-block; padding:3px 10px;
+    border-radius:999px; font-size:12px; font-weight:600;
+    background:#dbeafe; color:#1d4ed8; border:1px solid #93c5fd;
+}
+.team-badge-sales {
+    display:inline-block; padding:3px 10px;
+    border-radius:999px; font-size:12px; font-weight:600;
+    background:#dcfce7; color:#15803d; border:1px solid #86efac;
 }
 </style>
 """,
@@ -51,11 +44,12 @@ div[data-testid="stSidebar"] { border-right: 1px solid #d7dee8; }
 )
 
 
-def call_backend(api_url: str,endpoint: str,prompt: str,token: str | None) -> tuple[int | None, dict[str, Any]]:
+def call_backend(
+    api_url: str, endpoint: str, prompt: str, token: str | None
+) -> tuple[int | None, dict[str, Any]]:
     headers = {"Content-Type": "application/json"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
-
     response = requests.post(
         f"{api_url.rstrip('/')}{endpoint}",
         json={"prompt": prompt},
@@ -70,17 +64,16 @@ def call_backend(api_url: str,endpoint: str,prompt: str,token: str | None) -> tu
     return response.status_code, body
 
 
-for key, default in {
-    "token": None,
-    "history": [],
-}.items():
+# ── Session state init ────────────────────────────────────────────────────────
+for key, default in {"token": None, "history": []}.items():
     if key not in st.session_state:
         st.session_state[key] = default
 
 
+# ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
-    st.title("SAP Purchase")
-    st.caption("One Supervisor Agent routes every request.")
+    st.title("SAP ERP Supervisor")
+    st.caption("One Big Supervisor routes every request to the right team.")
 
     api_url = st.text_input("FastAPI URL", value=DEFAULT_API_URL)
 
@@ -106,9 +99,9 @@ with st.sidebar:
             st.error(f"Login failed: {exc}")
 
     if st.session_state.token:
-        st.markdown('<span class="status-pill">Token active</span>', unsafe_allow_html=True)
+        st.markdown('<span class="status-pill">✅ Token active</span>', unsafe_allow_html=True)
     else:
-        st.markdown('<span class="status-pill">Not authenticated</span>', unsafe_allow_html=True)
+        st.markdown('<span class="status-pill">🔒 Not authenticated</span>', unsafe_allow_html=True)
 
     st.divider()
     show_json = st.toggle("Show technical details", value=False)
@@ -116,46 +109,61 @@ with st.sidebar:
         st.session_state.history = []
         st.rerun()
 
+    st.divider()
+    st.markdown("**Teams Available**")
+    st.markdown("🔵 **Purchase Team** — PO, AP Invoice, Purchase Return")
+    st.markdown("🟢 **Sales Team** — Sales Order, AR Invoice")
 
-st.title("SAP B1 Purchase Supervisor Agent")
-st.caption("Ask naturally. The supervisor routes to purchase order, AP invoice, or purchase return agents.")
 
+# ── Main chat area ────────────────────────────────────────────────────────────
+st.title("🏢 SAP B1 ERP Supervisor Agent")
+st.caption(
+    "Ask anything in plain English. The Big Supervisor decides which team to call: "
+    "**Purchase** or **Sales**."
+)
+
+# Render chat history
 for message in st.session_state.history:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
         if message["role"] == "assistant" and show_json:
-            with st.expander("Supervisor and backend details"):
-                routing = message.get("routing")
-                api_response = message.get("api_response")
-                if routing:
-                    if api_response and isinstance(api_response, dict) and "data" in api_response and "sql" in api_response["data"]:
-                        st.markdown("#### 1. Agent Flow")
-                        doc_type = routing.get("documentType", "unknown").replace("_", " ").title()
-                        action = routing.get("action", "unknown").title()
-                        st.info(f"**Supervisor Agent** ➡️ **{action} {doc_type} Sub-Agent**")
-                        st.json(routing)
-                        st.markdown("#### 2. SQL Generation")
-                        sql_query = api_response.get("data", {}).get("sql", "N/A")
-                        st.code(sql_query, language="sql")
-                        st.markdown("#### 3. JSON Response")
-                        
-                        # Show relevant data part based on action
-                        if routing.get("action") == "fetch":
-                            st.json(api_response.get("data", {}).get("results", api_response.get("data", {}).get("rows", [])))
-                        else:
-                            st.json(api_response.get("data", {}).get("sapResponse", api_response))
-                    else:
-                        st.json(routing)
-                        if api_response:
-                            st.json(api_response)
+            _team = message.get("team", "purchase")
+            _routing = message.get("routing")
+            _api_response = message.get("api_response")
+            with st.expander("🔍 Big Supervisor & backend details"):
+                if _routing:
+                    st.markdown("#### 1. Routing Flow")
+                    _team_label = message.get("team_label", _team.title() + " Team")
+                    _badge_cls = "team-badge-sales" if _team == "sales" else "team-badge-purchase"
+                    _doc_type = _routing.get("documentType", "unknown").replace("_", " ").title()
+                    _action = _routing.get("action", "fetch").title()
+                    _subagent = _routing.get("subagent", "")
+                    st.markdown(
+                        f'**Big Supervisor** ➡️ <span class="{_badge_cls}">{_team_label}</span> ➡️ **{_action} {_doc_type} Sub-Agent**',
+                        unsafe_allow_html=True,
+                    )
+                    st.json(_routing)
 
-prompt = st.chat_input("Example: Show me the latest 5 purchase orders for vendor V001")
+                if _api_response and isinstance(_api_response, dict) and "data" in _api_response:
+                    _data = _api_response["data"]
+                    if "sql" in _data:
+                        st.markdown("#### 2. HANA SQL Generated")
+                        st.code(_data["sql"], language="sql")
+                    st.markdown("#### 3. JSON Response")
+                    _results = _data.get("results", _data.get("rows", _data.get("sapResponse", _api_response)))
+                    st.json(_results)
+
+
+# ── Chat input ────────────────────────────────────────────────────────────────
+prompt = st.chat_input(
+    "Example: Show top 5 customers by revenue  |  Show overdue purchase orders"
+)
 
 if prompt:
     st.session_state.history.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
-    
+
     with st.chat_message("assistant"):
         if not st.session_state.token:
             message = "Please login from the sidebar before I execute the request."
@@ -163,24 +171,24 @@ if prompt:
             st.session_state.history.append({"role": "assistant", "content": message})
             st.stop()
 
-        with st.spinner("Supervisor is routing the request..."):
+        with st.spinner("Big Supervisor is routing the request..."):
             try:
-                routing_response = route_prompt(prompt)
-                response_data = routing_response.model_dump()["data"]
-                routing_decision = response_data.get("fetchAgent")
-                if not routing_decision:
-                    raise RuntimeError("Supervisor did not return a routing decision.")
-                 
-                target_endpoint = ROUTE_ENDPOINTS.get(routing_decision["documentType"])
-                if not target_endpoint:
-                    raise RuntimeError(f"No backend endpoint mapped for {routing_decision['documentType']}.")
+                # ── Step 1: Big Supervisor decides team + endpoint ────────────
+                big_result = big_supervisor_route(prompt)
+                team = big_result["team"]
+                team_label = big_result["team_label"]
+                endpoint = big_result["endpoint"]
+                routing_decision = big_result["routing_decision"]
 
+                # ── Step 2: Call the right backend endpoint ───────────────────
                 status_code, api_response = call_backend(
                     api_url=api_url,
-                    endpoint=target_endpoint,
+                    endpoint=endpoint,
                     prompt=prompt,
                     token=st.session_state.token,
                 )
+
+                # ── Step 3: Generate chat reply ───────────────────────────────
                 assistant_reply = generate_chat_response(
                     prompt=prompt,
                     routing_decision=routing_decision,
@@ -189,36 +197,46 @@ if prompt:
                 )
 
                 st.markdown(assistant_reply)
+
+                # ── Step 4: Technical details expander ───────────────────────
                 if show_json:
-                    with st.expander("Supervisor and backend details", expanded=False):
-                        if api_response and isinstance(api_response, dict) and "data" in api_response and "sql" in api_response["data"]:
-                            st.markdown("#### 1. Agent Flow")
-                            doc_type = routing_decision.get("documentType", "unknown").replace("_", " ").title()
-                            action = routing_decision.get("action", "unknown").title()
-                            st.info(f"**Supervisor Agent** ➡️ **{action} {doc_type} Sub-Agent**")
-                            st.json(routing_decision)
-                            st.markdown("#### 2. SQL Generation")
-                            sql_query = api_response.get("data", {}).get("sql", "N/A")
-                            st.code(sql_query, language="sql")
+                    _badge_cls = "team-badge-sales" if team == "sales" else "team-badge-purchase"
+                    with st.expander("🔍 Big Supervisor & backend details", expanded=False):
+                        st.markdown("#### 1. Routing Flow")
+                        doc_type_label = routing_decision.get("documentType", "unknown").replace("_", " ").title()
+                        action_label = routing_decision.get("action", "fetch").title()
+                        st.markdown(
+                            f'**Big Supervisor** ➡️ <span class="{_badge_cls}">{team_label}</span> ➡️ **{action_label} {doc_type_label} Sub-Agent**',
+                            unsafe_allow_html=True,
+                        )
+                        st.json(routing_decision)
+
+                        if api_response and isinstance(api_response, dict) and "data" in api_response:
+                            data = api_response["data"]
+                            if "sql" in data:
+                                st.markdown("#### 2. HANA SQL Generated")
+                                st.code(data["sql"], language="sql")
                             st.markdown("#### 3. JSON Response")
-                            
-                            # Show relevant data part based on action
-                            if routing_decision.get("action") == "fetch":
-                                st.json(api_response.get("data", {}).get("results", api_response.get("data", {}).get("rows", [])))
-                            else:
-                                st.json(api_response.get("data", {}).get("sapResponse", api_response))
+                            results = data.get(
+                                "results",
+                                data.get("rows", data.get("sapResponse", api_response)),
+                            )
+                            st.json(results)
                         else:
-                            st.json(routing_decision)
                             st.code(json.dumps(api_response, indent=2, default=str), language="json")
 
+                # ── Step 5: Save to history ───────────────────────────────────
                 st.session_state.history.append(
                     {
                         "role": "assistant",
                         "content": assistant_reply,
+                        "team": team,
+                        "team_label": team_label,
                         "routing": routing_decision,
                         "api_response": api_response,
                     }
                 )
+
             except requests.exceptions.ConnectionError:
                 message = f"Could not connect to `{api_url}`. Start the FastAPI backend first."
                 st.error(message)

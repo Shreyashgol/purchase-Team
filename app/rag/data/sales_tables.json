@@ -1,0 +1,133 @@
+{
+  "ORDR": {
+    "description": "Sales order header table representing customer purchase commitments.",
+    "business_meaning": "customer sales pipeline, open orders, order value, order count, delivery tracking",
+    "embedding_text": "sales order customer order order value open orders pending orders overdue delivery sales pipeline order count customer commitment",
+    "business_terms": ["sales order", "so", "order", "customer order", "open order", "pending order"],
+    "columns": {
+      "\"DocEntry\"": "internal unique id for the sales order",
+      "\"DocNum\"": "sales order number shown to users",
+      "\"CardCode\"": "customer code",
+      "\"CardName\"": "customer name",
+      "\"DocDate\"": "sales order posting date",
+      "\"DocDueDate\"": "delivery due date",
+      "\"DocStatus\"": "status, O for open and C for closed",
+      "\"CANCELED\"": "Y when order is cancelled",
+      "\"DocTotal\"": "total sales order value",
+      "\"VatSum\"": "tax amount",
+      "\"DiscSum\"": "discount amount",
+      "\"Comments\"": "free text remarks"
+    },
+    "joins": [
+      { "table": "RDR1", "on": "RDR1.\"DocEntry\" = ORDR.\"DocEntry\"" },
+      { "table": "OCRD", "on": "OCRD.\"CardCode\" = ORDR.\"CardCode\"" }
+    ]
+  },
+  "RDR1": {
+    "description": "Sales order line items table with item-level quantity, price and delivery details.",
+    "business_meaning": "order line items, ordered quantity, item-level order value, pending delivery quantity",
+    "embedding_text": "sales order lines order items ordered quantity open quantity item details delivery line total item spend",
+    "business_terms": ["order lines", "order items", "ordered quantity", "open quantity"],
+    "columns": {
+      "\"DocEntry\"": "links the line to sales order header",
+      "\"LineNum\"": "line number",
+      "\"ItemCode\"": "item / product code",
+      "\"Dscription\"": "item description",
+      "\"Quantity\"": "ordered quantity",
+      "\"OpenQty\"": "pending or open quantity",
+      "\"Price\"": "unit price",
+      "\"LineTotal\"": "line value",
+      "\"ShipDate\"": "expected ship date",
+      "\"Currency\"": "line currency",
+      "\"WhsCode\"": "warehouse code",
+      "\"LineStatus\"": "line status, O for open and C for closed"
+    },
+    "joins": [
+      { "table": "ORDR", "on": "ORDR.\"DocEntry\" = RDR1.\"DocEntry\"" },
+      { "table": "OITM", "on": "OITM.\"ItemCode\" = RDR1.\"ItemCode\"" }
+    ]
+  },
+  "OINV": {
+    "description": "AR Invoice (sales invoice) header table representing finalized customer billing.",
+    "business_meaning": "sales revenue, customer billing, invoiced amount, balance receivable, paid amount, sales invoice analysis",
+    "embedding_text": "ar invoice sales invoice customer invoice revenue billing invoiced amount balance due receivable paid amount tax invoice count",
+    "business_terms": ["ar invoice", "sales invoice", "customer invoice", "receivable", "balance receivable"],
+    "columns": {
+      "\"DocEntry\"": "internal unique id for the AR invoice",
+      "\"DocNum\"": "AR invoice number shown to users",
+      "\"CardCode\"": "customer code",
+      "\"CardName\"": "customer name",
+      "\"DocDate\"": "invoice posting date",
+      "\"DocDueDate\"": "invoice due date",
+      "\"DocTotal\"": "total invoice amount",
+      "\"VatSum\"": "tax amount",
+      "\"DiscSum\"": "discount amount",
+      "\"PaidToDate\"": "amount collected to date",
+      "\"BalanceDue\"": "remaining receivable balance",
+      "\"DocStatus\"": "status, O for open and C for closed",
+      "\"CANCELED\"": "Y when invoice is cancelled"
+    },
+    "joins": [
+      { "table": "INV1", "on": "INV1.\"DocEntry\" = OINV.\"DocEntry\"" },
+      { "table": "OCRD", "on": "OCRD.\"CardCode\" = OINV.\"CardCode\"" }
+    ]
+  },
+  "INV1": {
+    "description": "AR Invoice line items table with item-level billed quantities, prices and taxes.",
+    "business_meaning": "invoice line items, item-level billing, invoiced quantity, item revenue",
+    "embedding_text": "ar invoice lines sales invoice items billed quantity invoiced item value item revenue price tax warehouse",
+    "business_terms": ["invoice lines", "billed items", "invoiced quantity", "item invoice value"],
+    "columns": {
+      "\"DocEntry\"": "links the line to AR invoice header",
+      "\"LineNum\"": "line number",
+      "\"ItemCode\"": "item / product code",
+      "\"Dscription\"": "item description",
+      "\"Quantity\"": "invoiced quantity",
+      "\"Price\"": "unit price",
+      "\"LineTotal\"": "line value",
+      "\"Currency\"": "line currency",
+      "\"WhsCode\"": "warehouse code",
+      "\"LineStatus\"": "line status, O for open and C for closed"
+    },
+    "joins": [
+      { "table": "OINV", "on": "OINV.\"DocEntry\" = INV1.\"DocEntry\"" },
+      { "table": "OITM", "on": "OITM.\"ItemCode\" = INV1.\"ItemCode\"" }
+    ]
+  },
+  "OCRD": {
+    "description": "Business partner master table for customers and vendors.",
+    "business_meaning": "customer master, customer details, customer name, customer code, business partner",
+    "embedding_text": "customer master customer details customer name customer code business partner client buyer",
+    "business_terms": ["customer", "client", "buyer", "business partner"],
+    "columns": {
+      "\"CardCode\"": "customer / vendor code",
+      "\"CardName\"": "customer / vendor name",
+      "\"CardType\"": "C for customer, S for supplier",
+      "\"Phone1\"": "primary phone",
+      "\"E_Mail\"": "email address",
+      "\"Country\"": "country code",
+      "\"Balance\"": "current balance"
+    },
+    "joins": [
+      { "table": "ORDR", "on": "ORDR.\"CardCode\" = OCRD.\"CardCode\"" },
+      { "table": "OINV", "on": "OINV.\"CardCode\" = OCRD.\"CardCode\"" }
+    ]
+  },
+  "OITM": {
+    "description": "Item master table for all products and services.",
+    "business_meaning": "item master, product catalog, item name, item code, stock level",
+    "embedding_text": "item master product catalog item name item code stock level inventory product details",
+    "business_terms": ["item", "product", "goods", "material", "stock"],
+    "columns": {
+      "\"ItemCode\"": "item code",
+      "\"ItemName\"": "item description or product name",
+      "\"OnHand\"": "current stock quantity",
+      "\"ItmsGrpCod\"": "item group code",
+      "\"SuppCatNum\"": "supplier catalog number"
+    },
+    "joins": [
+      { "table": "RDR1", "on": "RDR1.\"ItemCode\" = OITM.\"ItemCode\"" },
+      { "table": "INV1", "on": "INV1.\"ItemCode\" = OITM.\"ItemCode\"" }
+    ]
+  }
+}

@@ -1,0 +1,119 @@
+[
+  {
+    "question": "what is the total sales order value",
+    "intent": "sum sales order value",
+    "business_context": "total sales order value from ORDR represents committed sales amount",
+    "document_type": "sales_order",
+    "tables_used": ["ORDR"],
+    "embedding_text": "total sales order value total so amount sales commitment ordered value sum orders",
+    "sql": "SELECT SUM(T0.\"DocTotal\") AS \"total_sales_order_value\" FROM ORDR T0 WHERE COALESCE(T0.\"CANCELED\", 'N') <> 'Y'"
+  },
+  {
+    "question": "how many sales orders are open",
+    "intent": "count open sales orders",
+    "business_context": "open sales orders are ORDR rows where DocStatus is O and not cancelled",
+    "document_type": "sales_order",
+    "tables_used": ["ORDR"],
+    "embedding_text": "count open sales orders how many pending so open so pending orders",
+    "sql": "SELECT COUNT(*) AS \"open_sales_order_count\" FROM ORDR T0 WHERE T0.\"DocStatus\" = 'O' AND COALESCE(T0.\"CANCELED\", 'N') <> 'Y'"
+  },
+  {
+    "question": "which customers have the highest sales order value",
+    "intent": "customer-wise sales order value ranking",
+    "business_context": "group sales order committed value by customer from ORDR",
+    "document_type": "sales_order",
+    "tables_used": ["ORDR"],
+    "embedding_text": "top customers by sales order value customer wise so amount client spend ordered value ranking",
+    "sql": "SELECT T0.\"CardCode\", T0.\"CardName\", SUM(T0.\"DocTotal\") AS \"total_order_value\" FROM ORDR T0 WHERE COALESCE(T0.\"CANCELED\", 'N') <> 'Y' GROUP BY T0.\"CardCode\", T0.\"CardName\" ORDER BY \"total_order_value\" DESC LIMIT 10"
+  },
+  {
+    "question": "show overdue sales orders",
+    "intent": "find overdue open sales orders",
+    "business_context": "overdue sales orders are open non-cancelled ORDR rows with DocDueDate before current date",
+    "document_type": "sales_order",
+    "tables_used": ["ORDR"],
+    "embedding_text": "overdue sales orders delayed so due date passed open orders customer delivery delay",
+    "sql": "SELECT T0.\"DocNum\", T0.\"CardCode\", T0.\"CardName\", T0.\"DocDueDate\", T0.\"DocTotal\" FROM ORDR T0 WHERE T0.\"DocStatus\" = 'O' AND COALESCE(T0.\"CANCELED\", 'N') <> 'Y' AND T0.\"DocDueDate\" < CURRENT_DATE ORDER BY T0.\"DocDueDate\" ASC LIMIT 10"
+  },
+  {
+    "question": "which products have the most pending sales order quantity",
+    "intent": "item-wise pending sales order quantity",
+    "business_context": "pending sales quantity comes from RDR1 OpenQty for open sales order lines",
+    "document_type": "sales_order",
+    "tables_used": ["RDR1", "ORDR"],
+    "embedding_text": "top pending items sales order open quantity item wise pending so quantity not delivered",
+    "sql": "SELECT T0.\"ItemCode\", T0.\"Dscription\", SUM(T0.\"OpenQty\") AS \"pending_quantity\" FROM RDR1 T0 JOIN ORDR T1 ON T1.\"DocEntry\" = T0.\"DocEntry\" WHERE T1.\"DocStatus\" = 'O' AND COALESCE(T1.\"CANCELED\", 'N') <> 'Y' GROUP BY T0.\"ItemCode\", T0.\"Dscription\" ORDER BY \"pending_quantity\" DESC LIMIT 10"
+  },
+  {
+    "question": "what is the total AR invoice amount",
+    "intent": "sum AR invoice amount",
+    "business_context": "AR invoice value from OINV represents actual sales revenue billed to customers",
+    "document_type": "ar_invoice",
+    "tables_used": ["OINV"],
+    "embedding_text": "total ar invoice amount total sales invoice value customer bill revenue sum invoices",
+    "sql": "SELECT SUM(T0.\"DocTotal\") AS \"total_ar_invoice_amount\" FROM OINV T0 WHERE COALESCE(T0.\"CANCELED\", 'N') <> 'Y'"
+  },
+  {
+    "question": "how much AR invoice balance is receivable",
+    "intent": "sum AR invoice balance due",
+    "business_context": "balance receivable is the uncollected revenue on OINV",
+    "document_type": "ar_invoice",
+    "tables_used": ["OINV"],
+    "embedding_text": "ar invoice balance receivable unpaid outstanding customer bills pending collection balance due",
+    "sql": "SELECT SUM(COALESCE(T0.\"BalanceDue\", T0.\"DocTotal\" - COALESCE(T0.\"PaidToDate\", 0))) AS \"total_balance_receivable\" FROM OINV T0 WHERE COALESCE(T0.\"CANCELED\", 'N') <> 'Y'"
+  },
+  {
+    "question": "which customers have bought the most",
+    "intent": "customer-wise AR invoice value ranking",
+    "business_context": "group actual invoiced customer revenue by customer from OINV",
+    "document_type": "ar_invoice",
+    "tables_used": ["OINV"],
+    "embedding_text": "top customers by ar invoice value customer wise invoice amount sales revenue ranking highest spending customers",
+    "sql": "SELECT T0.\"CardCode\", T0.\"CardName\", SUM(T0.\"DocTotal\") AS \"total_invoice_value\" FROM OINV T0 WHERE COALESCE(T0.\"CANCELED\", 'N') <> 'Y' GROUP BY T0.\"CardCode\", T0.\"CardName\" ORDER BY \"total_invoice_value\" DESC LIMIT 10"
+  },
+  {
+    "question": "which products are selling the most",
+    "intent": "item-wise AR invoice quantity ranking",
+    "business_context": "top selling item quantity comes from INV1 quantity joined to OINV",
+    "document_type": "ar_invoice",
+    "tables_used": ["INV1", "OINV"],
+    "embedding_text": "top selling products best selling items highest revenue items item wise sales product ranking invoiced quantity",
+    "sql": "SELECT T0.\"ItemCode\", T0.\"Dscription\", SUM(T0.\"Quantity\") AS \"sold_quantity\", SUM(T0.\"LineTotal\") AS \"total_revenue\" FROM INV1 T0 JOIN OINV T1 ON T1.\"DocEntry\" = T0.\"DocEntry\" WHERE COALESCE(T1.\"CANCELED\", 'N') <> 'Y' GROUP BY T0.\"ItemCode\", T0.\"Dscription\" ORDER BY \"total_revenue\" DESC LIMIT 10"
+  },
+  {
+    "question": "how many sales orders today",
+    "intent": "count sales orders placed today",
+    "business_context": "count of ORDR rows with DocDate equal to current date",
+    "document_type": "sales_order",
+    "tables_used": ["ORDR"],
+    "embedding_text": "sales orders today today orders count today order volume daily orders",
+    "sql": "SELECT COUNT(*) AS \"orders_today\" FROM ORDR T0 WHERE T0.\"DocDate\" = CURRENT_DATE AND COALESCE(T0.\"CANCELED\", 'N') <> 'Y'"
+  },
+  {
+    "question": "compare sales order value and AR invoice value",
+    "intent": "compare committed sales order value with actual AR invoice value",
+    "business_context": "sales orders are commitments from ORDR, AR invoices are actual customer billing from OINV",
+    "document_type": "sales",
+    "tables_used": ["ORDR", "OINV"],
+    "embedding_text": "compare sales order value ar invoice value ordered vs invoiced commitment vs revenue",
+    "sql": "SELECT (SELECT SUM(T0.\"DocTotal\") FROM ORDR T0 WHERE COALESCE(T0.\"CANCELED\", 'N') <> 'Y') AS \"total_sales_order_value\", (SELECT SUM(T0.\"DocTotal\") FROM OINV T0 WHERE COALESCE(T0.\"CANCELED\", 'N') <> 'Y') AS \"total_ar_invoice_value\""
+  },
+  {
+    "question": "show latest sales orders",
+    "intent": "fetch recent sales orders",
+    "business_context": "retrieve most recent ORDR records ordered by date",
+    "document_type": "sales_order",
+    "tables_used": ["ORDR"],
+    "embedding_text": "latest sales orders recent orders show orders list orders fetch orders display orders",
+    "sql": "SELECT T0.\"DocNum\", T0.\"CardCode\", T0.\"CardName\", T0.\"DocDate\", T0.\"DocTotal\", T0.\"DocStatus\" FROM ORDR T0 WHERE COALESCE(T0.\"CANCELED\", 'N') <> 'Y' ORDER BY T0.\"DocDate\" DESC LIMIT 10"
+  },
+  {
+    "question": "show latest AR invoices",
+    "intent": "fetch recent AR invoices",
+    "business_context": "retrieve most recent OINV records ordered by date",
+    "document_type": "ar_invoice",
+    "tables_used": ["OINV"],
+    "embedding_text": "latest ar invoices recent invoices show invoices list invoices fetch invoices sales invoices",
+    "sql": "SELECT T0.\"DocNum\", T0.\"CardCode\", T0.\"CardName\", T0.\"DocDate\", T0.\"DocTotal\", T0.\"DocStatus\" FROM OINV T0 WHERE COALESCE(T0.\"CANCELED\", 'N') <> 'Y' ORDER BY T0.\"DocDate\" DESC LIMIT 10"
+  }
+]

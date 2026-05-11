@@ -29,3 +29,9 @@ class PurchaseTeamRoutingResponse(BaseModel):
     message: str
     data: Dict[str, Any]
 
+
+class SalesActionResponse(BaseModel):
+    status: str
+    message: str
+    data: Optional[Dict[str, Any]] = None
+
