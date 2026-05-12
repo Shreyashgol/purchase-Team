@@ -30,6 +30,10 @@ GROQ_BASE_URL = os.getenv("GROQ_BASE_URL", "https://api.groq.com/openai/v1")
 GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
 
 SQL_QUERY_TIMEOUT = int(os.getenv("SQL_QUERY_TIMEOUT", "30"))
+HANA_SQL_API_URL = os.getenv(
+    "HANA_SQL_API_URL",
+    "http://vzone.in:1662/api/GetMethod/GetData",
+)
 DATABASE_CONNECTION_STRING = resolve_database_connection_string()
 
 PURCHASE_RAG_EMBEDDING_MODEL = os.getenv("PURCHASE_RAG_EMBEDDING_MODEL", "BAAI/bge-base-en-v1.5")

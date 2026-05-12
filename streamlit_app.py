@@ -13,15 +13,14 @@ DEFAULT_API_URL = "http://127.0.0.1:8000"
 st.set_page_config(
     page_title="SAP ERP Supervisor",
     page_icon="🏢",
-    layout="centered",
+    layout="wide",
     initial_sidebar_state="expanded",
 )
 
 st.markdown(
     """
 <style>
-#MainMenu, footer, header { visibility: hidden; }
-.block-container { padding-top: 1.5rem; max-width: 960px; }
+.block-container { padding-top: 1.5rem; max-width: 1200px; }
 div[data-testid="stSidebar"] { border-right: 1px solid #d7dee8; }
 .status-pill {
     display:inline-block; padding:4px 10px;
@@ -65,7 +64,7 @@ def call_backend(
 
 
 # ── Session state init ────────────────────────────────────────────────────────
-for key, default in {"token": None, "history": []}.items():
+for key, default in {"history": []}.items():
     if key not in st.session_state:
         st.session_state[key] = default
 
@@ -78,30 +77,7 @@ with st.sidebar:
     api_url = st.text_input("FastAPI URL", value=DEFAULT_API_URL)
 
     st.divider()
-    st.subheader("Login")
-    username = st.text_input("Username", value="user1")
-    password = st.text_input("Password", type="password", value="pass123456")
-    if st.button("Login", use_container_width=True):
-        try:
-            response = requests.post(
-                f"{api_url.rstrip('/')}/login",
-                params={"username": username, "password": password},
-                timeout=15,
-            )
-            if response.status_code == 200:
-                st.session_state.token = response.json()["access_token"]
-                st.success("Authenticated.")
-            else:
-                st.session_state.token = None
-                st.error(response.text)
-        except Exception as exc:
-            st.session_state.token = None
-            st.error(f"Login failed: {exc}")
-
-    if st.session_state.token:
-        st.markdown('<span class="status-pill">✅ Token active</span>', unsafe_allow_html=True)
-    else:
-        st.markdown('<span class="status-pill">🔒 Not authenticated</span>', unsafe_allow_html=True)
+    st.divider()
 
     st.divider()
     show_json = st.toggle("Show technical details", value=False)
@@ -165,11 +141,7 @@ if prompt:
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        if not st.session_state.token:
-            message = "Please login from the sidebar before I execute the request."
-            st.warning(message)
-            st.session_state.history.append({"role": "assistant", "content": message})
-            st.stop()
+        # No login required
 
         with st.spinner("Big Supervisor is routing the request..."):
             try:
@@ -185,7 +157,7 @@ if prompt:
                     api_url=api_url,
                     endpoint=endpoint,
                     prompt=prompt,
-                    token=st.session_state.token,
+                    token=None,
                 )
 
                 # ── Step 3: Generate chat reply ───────────────────────────────

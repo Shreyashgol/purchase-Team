@@ -18,13 +18,9 @@ def create_jwt_token(user_id: str) -> str:
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
 
 
-def verify_jwt_token(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    token = credentials.credentials
-    try:
-        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        return payload["sub"]
-    except JWTError as exc:
-        raise HTTPException(status_code=401, detail="Invalid or expired token") from exc
+def verify_jwt_token():
+    """Bypassed authentication for guest access."""
+    return "guest"
 
 
 @lru_cache(maxsize=None)

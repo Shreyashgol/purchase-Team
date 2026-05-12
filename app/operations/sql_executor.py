@@ -5,6 +5,8 @@ from typing import Any
 
 import requests
 
+from app.config import HANA_SQL_API_URL, SQL_QUERY_TIMEOUT
+
 logger = logging.getLogger(__name__)
 
 
@@ -24,11 +26,11 @@ def execute_read_only_sql(sql: str, params: dict[str, Any] | None = None) -> lis
     if ";" in normalized.rstrip(";"):
         raise ValueError("Multiple SQL statements are not allowed")
 
-    encoded_query = urllib.parse.quote(normalized)
-    url = f"http://vzone.in:1662/api/GetMethod/GetData?query={encoded_query}"
+    encoded_query = urllib.parse.urlencode({"query": normalized})
+    url = f"{HANA_SQL_API_URL}?{encoded_query}"
 
     try:
-        response = requests.get(url, timeout=30)
+        response = requests.get(url, timeout=SQL_QUERY_TIMEOUT)
         response.raise_for_status()
         data = response.json()
         
@@ -45,6 +47,12 @@ def execute_read_only_sql(sql: str, params: dict[str, Any] | None = None) -> lis
         else:
             return []
             
+    except requests.exceptions.ConnectTimeout as e:
+        logger.error("Timed out connecting to HANA SQL API at %s: %s", HANA_SQL_API_URL, e)
+        raise ValueError(
+            f"HANA SQL API connection timed out after {SQL_QUERY_TIMEOUT}s. "
+            f"Check that {HANA_SQL_API_URL} is reachable from this machine/network."
+        ) from e
     except requests.exceptions.RequestException as e:
-        logger.error(f"Failed to execute HANA query on vzone.in: {e}")
+        logger.error("Failed to execute HANA query via %s: %s", HANA_SQL_API_URL, e)
         raise ValueError(f"HANA Database execution failed: {str(e)}") from e
