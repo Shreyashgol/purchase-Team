@@ -22,7 +22,7 @@ DATA_DIR = RAG_ROOT / "data"
 SALES_TABLES_PATH = DATA_DIR / "sales_tables.json"
 SALES_QUERIES_PATH = DATA_DIR / "sales_queries.json"
 
-ALLOWED_SALES_TABLES = {"ORDR", "RDR1", "OINV", "INV1", "OCRD", "OITM"}
+ALLOWED_SALES_TABLES = {"ORDR", "RDR1", "OINV", "INV1", "ORDN", "RDN1", "OCRD", "OITM"}
 _TOKEN_RE = re.compile(r"[a-zA-Z0-9_]+")
 logger = logging.getLogger(__name__)
 
@@ -265,7 +265,7 @@ STRICT RULES:
 - Never use semicolons
 - Never use CTEs unless absolutely required
 - Never use wildcard SELECT * unless explicitly requested.
-- Only use tables: ORDR, RDR1, OINV, INV1, OCRD, OITM
+- Only use tables: ORDR, RDR1, OINV, INV1, ORDN, RDN1, OCRD, OITM
 
 STATUS RULES:
 - "DocStatus" = 'O' means Open, 'C' means Closed
@@ -275,8 +275,9 @@ STATUS RULES:
 SAP SALES TABLES:
 - Sales Orders: header=ORDR, lines=RDR1 (join on "DocEntry")
 - AR Invoices:  header=OINV, lines=INV1 (join on "DocEntry")
-- Customers: OCRD (join ORDR or OINV on "CardCode")
-- Items:     OITM (join RDR1 or INV1 on "ItemCode")
+- Sales Returns: header=ORDN, lines=RDN1 (join on "DocEntry")
+- Customers: OCRD (join ORDR, OINV, or ORDN on "CardCode")
+- Items:     OITM (join RDR1, INV1, or RDN1 on "ItemCode")
 
 BUSINESS RULES:
 - Sales orders represent customer commitments and pipeline.

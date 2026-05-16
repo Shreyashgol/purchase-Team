@@ -124,5 +124,32 @@
     "tables_used": ["OINV"],
     "embedding_text": "latest ar invoices recent invoices show invoices list invoices fetch invoices sales invoices",
     "sql": "SELECT T0.\"DocNum\", T0.\"CardCode\", T0.\"CardName\", T0.\"DocDate\", T0.\"DocTotal\", T0.\"DocStatus\" FROM OINV T0 WHERE COALESCE(T0.\"CANCELED\", 'N') <> 'Y' ORDER BY T0.\"DocDate\" DESC LIMIT 10"
+  },
+  {
+    "question": "show latest sales returns",
+    "intent": "fetch recent sales returns",
+    "business_context": "retrieve most recent ORDN sales return records ordered by date",
+    "document_type": "sales_return",
+    "tables_used": ["ORDN"],
+    "embedding_text": "latest sales returns recent customer returns show returns list return documents",
+    "sql": "SELECT T0.\"DocNum\", T0.\"CardCode\", T0.\"CardName\", T0.\"DocDate\", T0.\"DocTotal\", T0.\"DocStatus\" FROM ORDN T0 WHERE COALESCE(T0.\"CANCELED\", 'N') <> 'Y' ORDER BY T0.\"DocDate\" DESC LIMIT 10"
+  },
+  {
+    "question": "which products are returned the most",
+    "intent": "item-wise sales return quantity ranking",
+    "business_context": "top returned items come from RDN1 quantity joined to ORDN",
+    "document_type": "sales_return",
+    "tables_used": ["RDN1", "ORDN"],
+    "embedding_text": "top returned products sales return items highest returned quantity item wise customer returns",
+    "sql": "SELECT T0.\"ItemCode\", T0.\"Dscription\", SUM(T0.\"Quantity\") AS \"returned_quantity\", SUM(T0.\"LineTotal\") AS \"total_return_value\" FROM RDN1 T0 JOIN ORDN T1 ON T1.\"DocEntry\" = T0.\"DocEntry\" WHERE COALESCE(T1.\"CANCELED\", 'N') <> 'Y' GROUP BY T0.\"ItemCode\", T0.\"Dscription\" ORDER BY \"returned_quantity\" DESC LIMIT 10"
+  },
+  {
+    "question": "what is the total sales return value",
+    "intent": "sum sales return value",
+    "business_context": "total sales return value from ORDN represents customer returned sales amount",
+    "document_type": "sales_return",
+    "tables_used": ["ORDN"],
+    "embedding_text": "total sales return value total customer returns amount returned goods credit value",
+    "sql": "SELECT SUM(T0.\"DocTotal\") AS \"total_sales_return_value\" FROM ORDN T0 WHERE COALESCE(T0.\"CANCELED\", 'N') <> 'Y'"
   }
 ]

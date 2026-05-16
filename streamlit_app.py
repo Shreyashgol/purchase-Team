@@ -72,7 +72,7 @@ for key, default in {"history": []}.items():
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 with st.sidebar:
     st.title("SAP ERP Supervisor")
-    st.caption("One Big Supervisor routes every request to the right team.")
+    st.caption("One Big Supervisor routes every request to the right team and sub-agent.")
 
     api_url = st.text_input("FastAPI URL", value=DEFAULT_API_URL)
 
@@ -88,7 +88,7 @@ with st.sidebar:
     st.divider()
     st.markdown("**Teams Available**")
     st.markdown("🔵 **Purchase Team** — PO, AP Invoice, Purchase Return")
-    st.markdown("🟢 **Sales Team** — Sales Order, AR Invoice, Sales Return")
+    st.markdown("🟢 **Sales Team** — SO, AP Invoice, Sales Return")
 
 
 # ── Main chat area ────────────────────────────────────────────────────────────
@@ -122,17 +122,30 @@ for message in st.session_state.history:
 
                 if _api_response and isinstance(_api_response, dict) and "data" in _api_response:
                     _data = _api_response["data"]
+                    if "agent" in _data:
+                        st.markdown("#### 2. Sub-Agent Execution")
+                        st.json(
+                            {
+                                "agent": _data.get("agent"),
+                                "strategy": _data.get("strategy"),
+                                "documentType": _data.get("documentType"),
+                                "workflow": _data.get("workflow"),
+                            }
+                        )
                     if "sql" in _data:
-                        st.markdown("#### 2. HANA SQL Generated")
+                        st.markdown("#### 3. HANA SQL Generated")
                         st.code(_data["sql"], language="sql")
-                    st.markdown("#### 3. JSON Response")
+                    if "filters" in _data:
+                        st.markdown("#### 4. RAG / Filter Metadata")
+                        st.json(_data["filters"])
+                    st.markdown("#### 5. JSON Response")
                     _results = _data.get("results", _data.get("rows", _data.get("sapResponse", _api_response)))
                     st.json(_results)
 
 
 # ── Chat input ────────────────────────────────────────────────────────────────
 prompt = st.chat_input(
-    "Example: Show top 5 customers by revenue  |  Show overdue purchase orders"
+    "Example: Show the top 5 sales order  |  Show overdue purchase orders"
 )
 
 if prompt:
@@ -185,10 +198,23 @@ if prompt:
 
                         if api_response and isinstance(api_response, dict) and "data" in api_response:
                             data = api_response["data"]
+                            if "agent" in data:
+                                st.markdown("#### 2. Sub-Agent Execution")
+                                st.json(
+                                    {
+                                        "agent": data.get("agent"),
+                                        "strategy": data.get("strategy"),
+                                        "documentType": data.get("documentType"),
+                                        "workflow": data.get("workflow"),
+                                    }
+                                )
                             if "sql" in data:
-                                st.markdown("#### 2. HANA SQL Generated")
+                                st.markdown("#### 3. HANA SQL Generated")
                                 st.code(data["sql"], language="sql")
-                            st.markdown("#### 3. JSON Response")
+                            if "filters" in data:
+                                st.markdown("#### 4. RAG / Filter Metadata")
+                                st.json(data["filters"])
+                            st.markdown("#### 5. JSON Response")
                             results = data.get(
                                 "results",
                                 data.get("rows", data.get("sapResponse", api_response)),

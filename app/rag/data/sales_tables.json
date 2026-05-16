@@ -94,6 +94,52 @@
       { "table": "OITM", "on": "OITM.\"ItemCode\" = INV1.\"ItemCode\"" }
     ]
   },
+  "ORDN": {
+    "description": "Sales return header table representing customer returned goods or credit memo source documents.",
+    "business_meaning": "sales returns, customer returns, returned value, return count, credit against sales",
+    "embedding_text": "sales return customer return returned goods return value credit memo return count customer refund",
+    "business_terms": ["sales return", "customer return", "return", "returned goods", "credit"],
+    "columns": {
+      "\"DocEntry\"": "internal unique id for the sales return",
+      "\"DocNum\"": "sales return number shown to users",
+      "\"CardCode\"": "customer code",
+      "\"CardName\"": "customer name",
+      "\"DocDate\"": "sales return posting date",
+      "\"DocDueDate\"": "return due date",
+      "\"DocTotal\"": "total sales return value",
+      "\"VatSum\"": "tax amount",
+      "\"DiscSum\"": "discount amount",
+      "\"DocStatus\"": "status, O for open and C for closed",
+      "\"CANCELED\"": "Y when return is cancelled",
+      "\"Comments\"": "free text remarks"
+    },
+    "joins": [
+      { "table": "RDN1", "on": "RDN1.\"DocEntry\" = ORDN.\"DocEntry\"" },
+      { "table": "OCRD", "on": "OCRD.\"CardCode\" = ORDN.\"CardCode\"" }
+    ]
+  },
+  "RDN1": {
+    "description": "Sales return line items table with item-level returned quantity, price and line value.",
+    "business_meaning": "sales return lines, returned items, returned quantity, item-level return value",
+    "embedding_text": "sales return lines returned items returned quantity return line total customer returned products",
+    "business_terms": ["return lines", "returned items", "returned quantity", "return items"],
+    "columns": {
+      "\"DocEntry\"": "links the line to sales return header",
+      "\"LineNum\"": "line number",
+      "\"ItemCode\"": "item / product code",
+      "\"Dscription\"": "item description",
+      "\"Quantity\"": "returned quantity",
+      "\"Price\"": "unit price",
+      "\"LineTotal\"": "line value",
+      "\"Currency\"": "line currency",
+      "\"WhsCode\"": "warehouse code",
+      "\"LineStatus\"": "line status, O for open and C for closed"
+    },
+    "joins": [
+      { "table": "ORDN", "on": "ORDN.\"DocEntry\" = RDN1.\"DocEntry\"" },
+      { "table": "OITM", "on": "OITM.\"ItemCode\" = RDN1.\"ItemCode\"" }
+    ]
+  },
   "OCRD": {
     "description": "Business partner master table for customers and vendors.",
     "business_meaning": "customer master, customer details, customer name, customer code, business partner",
@@ -110,7 +156,8 @@
     },
     "joins": [
       { "table": "ORDR", "on": "ORDR.\"CardCode\" = OCRD.\"CardCode\"" },
-      { "table": "OINV", "on": "OINV.\"CardCode\" = OCRD.\"CardCode\"" }
+      { "table": "OINV", "on": "OINV.\"CardCode\" = OCRD.\"CardCode\"" },
+      { "table": "ORDN", "on": "ORDN.\"CardCode\" = OCRD.\"CardCode\"" }
     ]
   },
   "OITM": {
@@ -127,7 +174,8 @@
     },
     "joins": [
       { "table": "RDR1", "on": "RDR1.\"ItemCode\" = OITM.\"ItemCode\"" },
-      { "table": "INV1", "on": "INV1.\"ItemCode\" = OITM.\"ItemCode\"" }
+      { "table": "INV1", "on": "INV1.\"ItemCode\" = OITM.\"ItemCode\"" },
+      { "table": "RDN1", "on": "RDN1.\"ItemCode\" = OITM.\"ItemCode\"" }
     ]
   }
 }
